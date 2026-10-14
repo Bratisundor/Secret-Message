@@ -5,6 +5,7 @@ connectDB();
 const app = express();
 const PORT = 3000;
 const cors=require("cors");
+require("dotenv");
 app.use(cors())
 app.get("/", (req, res) => {
     res.send("Colche");
@@ -62,6 +63,6 @@ app.get("/api/links",async (req,res)=>{
      res.status(200).json({linkId: linkID});
 })
 
-app.listen(PORT, () => {
+app.listen(process.env.PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
