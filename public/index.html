@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secret Message</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <span class="spark" style="top:12%;left:14%">✨</span>
+  <span class="spark" style="top:20%;right:12%;animation-delay:-1s">⭐</span>
+  <span class="spark" style="bottom:18%;left:10%;animation-delay:-2s">💫</span>
+  <span class="spark" style="bottom:10%;right:16%;animation-delay:-1.5s">✨</span>
+
+  <div class="wrap">
+    <svg class="ghost" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M20 108 V55 C20 28 38 12 60 12 C82 12 100 28 100 55 V108 L88 98 L74 108 L60 98 L46 108 L32 98 Z" fill="#ffffff" stroke="#8f6bff" stroke-width="4" stroke-linejoin="round"/>
+      <ellipse class="eye" cx="46" cy="55" rx="6" ry="9" fill="#3b2a63"/>
+      <ellipse class="eye" cx="74" cy="55" rx="6" ry="9" fill="#3b2a63"/>
+      <circle cx="48" cy="51" r="2.2" fill="#fff"/><circle cx="76" cy="51" r="2.2" fill="#fff"/>
+      <ellipse cx="36" cy="68" rx="7" ry="4.5" fill="#ff9ed8" opacity=".85"/>
+      <ellipse cx="84" cy="68" rx="7" ry="4.5" fill="#ff9ed8" opacity=".85"/>
+      <path d="M52 70 Q60 80 68 70" stroke="#3b2a63" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    </svg>
+
+    <div class="card">
+      <h1>Secret Message 💌</h1>
+      <p class="sub">Create your own link. Friends send you anonymous messages!</p>
+
+      <div id="createBox">
+        <button class="btn send" id="createBtn" onclick="createLink()">✨ Create my link</button>
+        <div class="status" id="status"></div>
+      </div>
+
+      <div id="resultBox" style="display:none">
+        <div class="linkbox">
+          <h3>📤 Share this link</h3>
+          <p>Put it in your WhatsApp status. Anyone can send you a message.</p>
+          <div class="url" id="sendUrl"></div>
+          <button class="copy" onclick="copyText('sendUrl')">Copy</button>
+        </div>
+
+        <div class="linkbox private">
+          <h3>📬 Your inbox</h3>
+          <p>Open this to read your messages. Save it or bookmark it, so you don't lose it!</p>
+          <div class="url" id="inboxUrl"></div>
+          <button class="copy pink" onclick="copyText('inboxUrl')">Copy</button>
+          <a class="copy pink" id="openInbox" href="#" style="text-decoration:none;display:inline-block;margin-left:6px">Open inbox</a>
+        </div>
+
+        <button class="btn link" onclick="newLink()">➕ Create another link</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Developed by
+    <a href="https://www.linkedin.com/in/brati-sundor-biswas-262412289/" target="_blank" rel="noopener noreferrer">Brati Sundor Biswas</a>
+    with <span class="heart">❤</span>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    function showToast(text) {
+      const t = $("toast");
+      t.textContent = text;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2200);
+    }
+
+    function showLinks(linkId) {
+      const sendLink = location.origin + "/send.html?id=" + encodeURIComponent(linkId);
+      const inboxLink = location.origin + "/inbox.html?id=" + encodeURIComponent(linkId);
+      $("sendUrl").textContent = sendLink;
+      $("inboxUrl").textContent = inboxLink;
+      $("openInbox").href = inboxLink;
+      $("createBox").style.display = "none";
+      $("resultBox").style.display = "block";
+    }
+
+    // if this browser already made a link, show it again
+    try {
+      const saved = localStorage.getItem("myLinkId");
+      if (saved) showLinks(saved);
+    } catch (e) {}
+
+    async function createLink() {
+      const btn = $("createBtn");
+      btn.disabled = true;
+      btn.textContent = "Creating... ✨";
+      $("status").textContent = "";
+
+      try {
+        const res = await fetch(API_BASE + "/api/links");
+        const data = await res.json();
+        if (!res.ok || !data.linkId) throw new Error("Failed");
+
+        try { localStorage.setItem("myLinkId", data.linkId); } catch (e) {}
+        showLinks(data.linkId);
+      } catch (e) {
+        $("status").textContent = "Something went wrong 😢";
+        $("status").className = "status err";
+      }
+
+      btn.disabled = false;
+      btn.textContent = "✨ Create my link";
+    }
+
+    function newLink() {
+      try { localStorage.removeItem("myLinkId"); } catch (e) {}
+      $("resultBox").style.display = "none";
+      $("createBox").style.display = "block";
+    }
+
+    async function copyText(id) {
+      try {
+        await navigator.clipboard.writeText($(id).textContent);
+        showToast("Copied! 💚");
+      } catch (e) {
+        showToast("Copy failed, select and copy manually");
+      }
+    }
+  </script>
+</body>
+</html>

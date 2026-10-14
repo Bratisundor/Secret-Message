@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Inbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <span class="spark" style="top:12%;left:14%">✨</span>
+  <span class="spark" style="top:20%;right:12%;animation-delay:-1s">⭐</span>
+  <span class="spark" style="bottom:18%;left:10%;animation-delay:-2s">💫</span>
+
+  <div class="wrap">
+    <svg class="ghost" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M20 108 V55 C20 28 38 12 60 12 C82 12 100 28 100 55 V108 L88 98 L74 108 L60 98 L46 108 L32 98 Z" fill="#ffffff" stroke="#8f6bff" stroke-width="4" stroke-linejoin="round"/>
+      <ellipse class="eye" cx="46" cy="55" rx="6" ry="9" fill="#3b2a63"/>
+      <ellipse class="eye" cx="74" cy="55" rx="6" ry="9" fill="#3b2a63"/>
+      <circle cx="48" cy="51" r="2.2" fill="#fff"/><circle cx="76" cy="51" r="2.2" fill="#fff"/>
+      <ellipse cx="36" cy="68" rx="7" ry="4.5" fill="#ff9ed8" opacity=".85"/>
+      <ellipse cx="84" cy="68" rx="7" ry="4.5" fill="#ff9ed8" opacity=".85"/>
+      <path d="M52 70 Q60 80 68 70" stroke="#3b2a63" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    </svg>
+
+    <div class="card">
+      <h1>My Inbox 📬</h1>
+      <p class="sub">Secret messages sent to your link.</p>
+
+      <div class="inbox-top">
+        <span class="total" id="total"></span>
+        <button class="copy" onclick="load()">🔄 Refresh</button>
+      </div>
+
+      <div class="inbox-list" id="list"></div>
+
+      <hr class="divider" />
+      <a class="btn link" href="/">🔗 Back to my links</a>
+    </div>
+  </div>
+
+  <footer>
+    Developed by
+    <a href="https://www.linkedin.com/in/brati-sundor-biswas-262412289/" target="_blank" rel="noopener noreferrer">Brati Sundor Biswas</a>
+    with <span class="heart">❤</span>
+  </footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // link id comes from the address: /inbox.html?id=abc1234
+    const linkId = new URLSearchParams(location.search).get("id");
+
+    function showEmpty(icon, text) {
+      const list = $("list");
+      list.textContent = "";
+      const box = document.createElement("div");
+      box.className = "empty";
+      const big = document.createElement("div");
+      big.className = "big";
+      big.textContent = icon;
+      const p = document.createElement("p");
+      p.textContent = text;
+      box.append(big, p);
+      list.appendChild(box);
+    }
+
+    async function load() {
+      if (!linkId) {
+        showEmpty("🔒", "This inbox link is broken.");
+        return;
+      }
+      try {
+        const res = await fetch(API_BASE + "/messages/" + encodeURIComponent(linkId));
+        const data = await res.json();
+
+        if (!res.ok) {
+          $("total").textContent = "";
+          showEmpty("😢", data.error || "Could not load messages");
+          return;
+        }
+
+        $("total").textContent = data.length + " message" + (data.length === 1 ? "" : "s");
+
+        if (data.length === 0) {
+          showEmpty("🕊️", "No messages yet. Share your link on your WhatsApp status!");
+          return;
+        }
+
+        const list = $("list");
+        list.textContent = "";
+
+        // textContent only, so message text can never run as code
+        data.forEach((m) => {
+          const card = document.createElement("div");
+          card.className = "msg";
+
+          const who = document.createElement("div");
+          who.className = "who";
+          who.textContent = "🕵️ " + m.name;
+
+          const text = document.createElement("div");
+          text.className = "text";
+          text.textContent = m.message;
+
+          const when = document.createElement("div");
+          when.className = "when";
+          when.textContent = m.time;
+
+          card.append(who, text, when);
+          list.appendChild(card);
+        });
+      } catch (e) {
+        showEmpty("😢", "Server not reachable");
+      }
+    }
+
+    load();
+    setInterval(load, 30000);
+  </script>
+</body>
+</html>

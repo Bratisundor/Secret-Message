@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Send a Secret Message</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <span class="spark" style="top:12%;left:14%">✨</span>
+  <span class="spark" style="top:20%;right:12%;animation-delay:-1s">⭐</span>
+  <span class="spark" style="bottom:18%;left:10%;animation-delay:-2s">💫</span>
+  <span class="spark" style="bottom:10%;right:16%;animation-delay:-1.5s">✨</span>
+
+  <div class="wrap">
+    <svg class="ghost" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M20 108 V55 C20 28 38 12 60 12 C82 12 100 28 100 55 V108 L88 98 L74 108 L60 98 L46 108 L32 98 Z" fill="#ffffff" stroke="#8f6bff" stroke-width="4" stroke-linejoin="round"/>
+      <ellipse class="eye" cx="46" cy="55" rx="6" ry="9" fill="#3b2a63"/>
+      <ellipse class="eye" cx="74" cy="55" rx="6" ry="9" fill="#3b2a63"/>
+      <circle cx="48" cy="51" r="2.2" fill="#fff"/><circle cx="76" cy="51" r="2.2" fill="#fff"/>
+      <ellipse cx="36" cy="68" rx="7" ry="4.5" fill="#ff9ed8" opacity=".85"/>
+      <ellipse cx="84" cy="68" rx="7" ry="4.5" fill="#ff9ed8" opacity=".85"/>
+      <path d="M52 70 Q60 80 68 70" stroke="#3b2a63" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    </svg>
+
+    <div class="card">
+      <h1>Secret Message 💌</h1>
+      <p class="sub">Someone wants to hear your secret. They won't know it's you!</p>
+
+      <div id="formBox">
+        <label for="name">Your name (optional)</label>
+        <input id="name" maxlength="30" placeholder="Leave empty = Anonymous 🕵️" autocomplete="off" />
+
+        <label for="message">Your secret message</label>
+        <textarea id="message" maxlength="500" placeholder="Type your secret here... 🤫"></textarea>
+        <div class="count"><span id="cnt">0</span>/500</div>
+
+        <button class="btn send" id="sendBtn" onclick="sendMessage()">Send Secretly 🚀</button>
+        <div class="status" id="status"></div>
+      </div>
+
+      <div class="sent" id="sentBox">
+        <div class="big">🎉</div>
+        <h2>Message sent!</h2>
+        <p>Your secret is safe. You can send one message per day.</p>
+      </div>
+
+      <hr class="divider" />
+      <a class="btn link" href="/">🔗 Get your own link</a>
+    </div>
+  </div>
+
+  <footer>
+    Developed by
+    <a href="https://www.linkedin.com/in/brati-sundor-biswas-262412289/" target="_blank" rel="noopener noreferrer">Brati Sundor Biswas</a>
+    with <span class="heart">❤</span>
+  </footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // link id comes from the address: /send.html?id=abc1234
+    const linkId = new URLSearchParams(location.search).get("id");
+    const storeKey = "sentAt_" + linkId;
+
+    $("message").addEventListener("input", () => {
+      $("cnt").textContent = $("message").value.length;
+    });
+
+    function setStatus(text, type) {
+      const s = $("status");
+      s.textContent = text;
+      s.className = "status " + (type || "");
+    }
+
+    function showSent() {
+      $("formBox").style.display = "none";
+      $("sentBox").style.display = "block";
+    }
+
+    if (!linkId) {
+      $("sendBtn").disabled = true;
+      setStatus("This link is broken. Ask your friend for the link again 🥺", "err");
+    } else {
+      // already sent to THIS link from this browser?
+      try {
+        const last = localStorage.getItem(storeKey);
+        if (last && Date.now() - Number(last) < 24 * 60 * 60 * 1000) showSent();
+      } catch (e) {}
+    }
+
+    async function sendMessage() {
+      const name = $("name").value.trim();
+      const message = $("message").value.trim();
+
+      if (!message) {
+        setStatus("Please write a message first 🥺", "err");
+        return;
+      }
+
+      const btn = $("sendBtn");
+      btn.disabled = true;
+      btn.textContent = "Sending... ✨";
+      setStatus("");
+
+      try {
+        const res = await fetch(API_BASE + "/message", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name || undefined, message, linkId }),
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          try { localStorage.setItem(storeKey, String(Date.now())); } catch (e) {}
+          showSent();
+        } else {
+          setStatus(data.error || "Something went wrong 😢", "err");
+        }
+      } catch (e) {
+        setStatus("Server not reachable 😢", "err");
+      }
+
+      btn.disabled = false;
+      btn.textContent = "Send Secretly 🚀";
+    }
+  </script>
+</body>
+</html>
