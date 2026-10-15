@@ -12,7 +12,7 @@ const messageSchema = new mongoose.Schema({
     },
     linkId: { 
         type: String, 
-        unique:true, 
+        //unique:true, 
         required: true },
     createdAt:{
         type: Date,
