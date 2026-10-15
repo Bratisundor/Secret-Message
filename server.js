@@ -20,7 +20,7 @@ const messageLimiter = rateLimit({
   max: 1,                         
   message: { error: "You already send a message" },
 });
-app.post("/message",messageLimiter,async(req,res)=>{
+app.post("/message",async(req,res)=>{
     try{
         const newMessage = await Message.create({
            
